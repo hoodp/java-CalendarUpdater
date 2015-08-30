@@ -15,18 +15,21 @@ import com.google.api.services.calendar.model.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class CalendarQuickstart {
+
     /** Application name. */
     private static final String APPLICATION_NAME =
         "Google Calendar API Java Quickstart";
 
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
-									System.getProperty("user.home"), ".credentials/calendar-api-quickstart");
+            System.getProperty("user.home"),
+            ".credentials/calendar-api-quickstart");
 
     /** Global instance of the {@link FileDataStoreFactory}. */
     private static FileDataStoreFactory DATA_STORE_FACTORY;
@@ -39,8 +42,8 @@ public class CalendarQuickstart {
     private static HttpTransport HTTP_TRANSPORT;
 
     /** Global instance of the scopes required by this quickstart. */
-    private static final List<String> SCOPES =
-						Arrays.asList(CalendarScopes.CALENDAR_READONLY);
+    private static final List<String> SCOPES = Arrays.asList(
+            CalendarScopes.CALENDAR_READONLY);
 
     /** service used to get calendar info */
     private com.google.api.services.calendar.Calendar service;
@@ -67,23 +70,24 @@ public class CalendarQuickstart {
      * @throws IOException
      */
     public static Credential authorize() throws IOException {
+
         // Load client secrets.
-        InputStream in =
-            CalendarQuickstart.class.getResourceAsStream("/client_secret.json");
-        GoogleClientSecrets clientSecrets =
-            GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        InputStream in = CalendarQuickstart.class
+                .getResourceAsStream("/client_secret.json");
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
+                JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow =
-	    new GoogleAuthorizationCodeFlow.Builder(
-						    HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-	    .setDataStoreFactory(DATA_STORE_FACTORY)
-	    .setAccessType("offline")
-	    .build();
-        Credential credential = new AuthorizationCodeInstalledApp(
-								  flow, new LocalServerReceiver()).authorize("user");
-        System.out.println(
-			   "Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
+                new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT,
+                    JSON_FACTORY, clientSecrets, SCOPES)
+                .setDataStoreFactory(DATA_STORE_FACTORY)
+                .setAccessType("offline")
+                .build();
+        Credential credential = new AuthorizationCodeInstalledApp(flow,
+                new LocalServerReceiver()).authorize("user");
+        /*System.out.println("Credentials saved to "
+                + DATA_STORE_DIR.getAbsolutePath());*/
         return credential;
     }
 
@@ -96,7 +100,7 @@ public class CalendarQuickstart {
         getCalendarService() throws IOException {
         Credential credential = authorize();
         return new com.google.api.services.calendar.Calendar.Builder(
-								     HTTP_TRANSPORT, JSON_FACTORY, credential)
+                HTTP_TRANSPORT, JSON_FACTORY, credential)
 	    .setApplicationName(APPLICATION_NAME)
 	    .build();
     }
@@ -172,12 +176,30 @@ public class CalendarQuickstart {
         // get the selected calendar info
         Events events = service.events().list(calendars.get(calNum)
                 .getId()).execute();
+
+        // create header
+        String header = String.format("\t%s\t|\t%s\t", "Due Date", "Name");
+
+        // seperation between header & events
+        String seperation = "";
+        for (int i = 0; i < header.length(); i++)
+            seperation += " - ";
+
+        // display the header
+        System.out.printf("%s\n%s\n%s\n", seperation, header, seperation);
+
+        // display each event
         for (Event e : events.getItems()) {
-            System.out.println(e.getSummary());
+            DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy MM dd");
+            System.out.printf(" %s | %s\n", e.getCreated(), e.getSummary());
         }
     }
 
     public static void main(String[] args) {
+        for (String s: args) {
+            System.out.println(s);
+        }
+        System.out.println("Thinking...");
         new CalendarQuickstart();
     }
 }
