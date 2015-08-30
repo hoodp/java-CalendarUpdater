@@ -42,6 +42,15 @@ public class CalendarQuickstart {
     private static final List<String> SCOPES =
 						Arrays.asList(CalendarScopes.CALENDAR_READONLY);
 
+    /** service used to get calendar info */
+    private com.google.api.services.calendar.Calendar service;
+
+    /** list stores user calendars */
+    private List<CalendarListEntry> calendars;
+
+    /** scanner for reading system input */
+    private Scanner in;
+
     static {
         try {
             HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -92,59 +101,83 @@ public class CalendarQuickstart {
 	    .build();
     }
 
-    public static void main(String[] args) throws IOException {
-        com.google.api.services.calendar.Calendar service =
-                getCalendarService();
-        String token = null;
-        CalendarList cals = service.calendarList().list().setPageToken(token)
-                .execute();
+    public CalendarQuickstart() {
+        try {
 
-        // create list of calendars
-        List<CalendarListEntry> calList = cals.getItems();
+            // setup the scanner
+            in = new Scanner(System.in);
+
+            // setup google calendar service
+            service = getCalendarService();
+
+            // set google calendars
+            calendars = setCalendars();
+
+            // start running calendar
+            listCalEvents();
+
+            // run until done viewing calendar info
+            while(goBack()) {
+                listCalEvents();
+            }
+
+            // close the scanner
+            in.close();
+        } catch (Exception e) {
+            System.out.printf("Error: %s\n", e.getMessage());
+        }
+    }
+
+    private boolean goBack() {
+        System.out.print("Go back [Y/n]: ");
+
+        // read input & convert result to uppercase
+        String result = in.next().toUpperCase();
+
+        // check if first char is Y
+        return result.charAt(0) == 'Y';
+    }
+
+    private void listCalEvents() throws IOException {
+
+        // get calendar number
+        int calNum = getCalendarNum();
+
+        // list the calendar events
+        listEvents(calNum);
+    }
+
+    private List<CalendarListEntry> setCalendars() throws IOException {
+        return service.calendarList().list().setPageToken(null).execute()
+                .getItems();
+    }
+
+    private int getCalendarNum() throws IOException {
 
         // display prompt
         System.out.println("Calendars:");
 
         // display each calendar name
-        for (int i = 0; i < calList.size(); i++) {
-            System.out.printf("%s: %s\n", i + 1, calList.get(i).getSummary());
+        for (int i = 0; i < calendars.size(); i++) {
+            System.out.printf("%s: %s\n", i + 1, calendars.get(i).getSummary());
         }
 
-        // open scanner & read calendar number 
+        // open scanner & read calendar number
         System.out.print("Enter calendar #: ");
-        Scanner in = new Scanner(System.in);
-        int calNum = in.nextInt();
-        in.close();
-        System.out.println(calNum);
+        return in.nextInt() - 1;
     }
 
-/*    public static void main(String[] args) throws IOException {
-        // Build a new authorized API client service.
-        // Note: Do not confuse this class with the
-        //   com.google.api.services.calendar.model.Calendar class.
-        com.google.api.services.calendar.Calendar service =
-            getCalendarService();
+    private void listEvents(int calNum) throws IOException {
 
-        // List the next 10 events from the primary calendar.
-        DateTime now = new DateTime(System.currentTimeMillis());
-        Events events = service.events().list("primary")
-            .setMaxResults(10)
-            .setTimeMin(now)
-            .setOrderBy("startTime")
-            .setSingleEvents(true)
-            .execute();
-        List<Event> items = events.getItems();
-        if (items.size() == 0) {
-            System.out.println("No upcoming events found.");
-        } else {
-            System.out.println("Upcoming events");
-            for (Event event : items) {
-                DateTime start = event.getStart().getDateTime();
-                if (start == null) {
-                    start = event.getStart().getDate();
-                }
-                System.out.printf("%s (%s)\n", event.getSummary(), start);
-            }
+        // get the selected calendar info
+        Events events = service.events().list(calendars.get(calNum)
+                .getId()).execute();
+        for (Event e : events.getItems()) {
+            System.out.println(e.getSummary());
         }
-    }*/
+    }
+
+    public static void main(String[] args) {
+        new CalendarQuickstart();
+    }
 }
