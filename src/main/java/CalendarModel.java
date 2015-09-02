@@ -18,26 +18,26 @@ public class CalendarModel {
     }
 
     private void setName(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     private void setId(String id) {
-	this.id = id;
+        this.id = id;
     }
 
     private void setEvents(Events events) {
-	this.events = events;
+        this.events = events;
     }
 
     public String getName () {
-	return this.name;
+        return this.name;
     }
 
     public String getId() {
-	return this.id;
+        return this.id;
     }
 
     public Events getEvents() {
-	return this.events;
+        return this.events;
     }
 }
